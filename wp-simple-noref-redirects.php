@@ -2,12 +2,12 @@
 /*
   Plugin Name: Simple noref Redirects
   Description: Create a list of URLs that you would like to redirect without referrer to another page or site. Now with wildcard support.Derived from http://www.scottnelle.com/simple-noref-redirects-plugin-for-wordpress/
-  Version: 1.00
+  Version: 1.05
   Author: Hideki Noma
   Author URI: http://www.logitoy.jp/
  */
 
-/*  Copyright 2016  Hideki Noma  (email : r-wp@logitoy.jp)
+/*  Copyright 2016-2019  Hideki Noma  (email : r-wp@logitoy.jp)
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@
 if (!class_exists("SimpleNorefRirects")) {
 
     class SimpleNorefRedirects {
+        private $dev_info = null;
 
         /**
          * create_menu function
@@ -85,7 +86,11 @@ if (!class_exists("SimpleNorefRirects")) {
                         <thead>
                             <tr>
                                 <th colspan="2">Request</th>
-                                <th colspan="1">Destination</th>
+                                <th colspan="1">Destination<br />default</th>
+                                <th colspan="1">Destination<br />Android</th>
+                                <th colspan="1">Destination<br />iPhone</th>
+                                <th colspan="1">Destination<br />Tablet</th>
+                                <th colspan="1">Destination<br />iPad</th>
                                 <th colspan="1">Delay</th>
                                 <th colspan="2">Original Message</th>
                             </tr>
@@ -97,11 +102,15 @@ if (!class_exists("SimpleNorefRirects")) {
                             </tr>
                             <?php echo $this->expand_redirects(); ?>
                             <tr>
-                                <td style="width:30%;"><input type="text" name="noref_redirects[request][]" value="" style="width:99%;" /></td>
+                                <td style="width:10%;"><input type="text" name="noref_redirects[request][]" value="" style="width:99%;" /></td>
                                 <td style="width:2%;">&raquo;</td>
-                                <td style="width:30%;"><input type="text" name="noref_redirects[destination][]" value="" style="width:99%;" /></td>
-                                <td style="width:10%;"><input type="text" name="noref_redirects[delay][]" value="" style="width:99%;" /></td>
-                                <td style="width:25%;"><textarea type="text" name="noref_redirects[message][]" style="width:99%;" /></textarea></td>
+                                <td style="width:15%;"><input type="text" name="noref_redirects[destination][]" value="" style="width:99%;" /></td>
+                                <td style="width:12%;"><input type="text" name="noref_redirects[destination_sp][]" value="" style="width:99%;" /></td>
+                                <td style="width:12%;"><input type="text" name="noref_redirects[destination_ios][]" value="" style="width:99%;" /></td>
+                                <td style="width:12%;"><input type="text" name="noref_redirects[destination_tablet][]" value="" style="width:99%;" /></td>
+                                <td style="width:12%;"><input type="text" name="noref_redirects[destination_ipad][]" value="" style="width:99%;" /></td>
+                                <td style="width:5%;"><input type="text" name="noref_redirects[delay][]" value="" style="width:99%;" /></td>
+                                <td style="width:20%;"><textarea type="text" name="noref_redirects[message][]" style="width:99%;" /></textarea></td>
                                 <td><span class="wpsnoref-delete">Delete</span></td>
                             </tr>
                         </tbody>
@@ -161,6 +170,10 @@ if (!class_exists("SimpleNorefRirects")) {
                 foreach ($redirects as $request => $data) {
                     $setting = unserialize($data);
                     $destination = $setting['destination'];
+                    $destination_sp = $setting['destination_sp'];
+                    $destination_ios = $setting['destination_ios'];
+                    $destination_tablet = $setting['destination_tablet'];
+                    $destination_ipad = $setting['destination_ipad'];
                     $delay = $setting['delay'];
                     $message = htmlentities($setting['message']);
                     $output .= '
@@ -169,6 +182,10 @@ if (!class_exists("SimpleNorefRirects")) {
 						<td><input type="text" name="noref_redirects[request][]" value="' . $request . '" style="width:99%" /></td>
 						<td>&raquo;</td>
 						<td><input type="text" name="noref_redirects[destination][]" value="' . $destination . '" style="width:99%;" /></td>
+						<td><input type="text" name="noref_redirects[destination_sp][]" value="' . $destination_sp . '" style="width:99%;" /></td>
+						<td><input type="text" name="noref_redirects[destination_ios][]" value="' . $destination_ios . '" style="width:99%;" /></td>
+						<td><input type="text" name="noref_redirects[destination_tablet][]" value="' . $destination_tablet . '" style="width:99%;" /></td>
+						<td><input type="text" name="noref_redirects[destination_ipad][]" value="' . $destination_ipad . '" style="width:99%;" /></td>
 						<td><input type="text" name="noref_redirects[delay][]" value="' . $delay . '" style="width:99%;" /></td>
                                                 <td><textarea type="text" name="noref_redirects[message][]" style="width:99%;" />' . $message . '</textarea></td>
 						<td><span class="wpsnoref-delete"></span></td>
@@ -200,6 +217,10 @@ if (!class_exists("SimpleNorefRirects")) {
             for ($i = 0; $i < sizeof($data['request']); ++$i) {
                 $request = trim(sanitize_text_field($data['request'][$i]));
                 $destination = trim(sanitize_text_field($data['destination'][$i]));
+                $destination_sp = trim(sanitize_text_field($data['destination_sp'][$i]));
+                $destination_ios = trim(sanitize_text_field($data['destination_ios'][$i]));
+                $destination_tablet = trim(sanitize_text_field($data['destination_tablet'][$i]));
+                $destination_ipad = trim(sanitize_text_field($data['destination_ipad'][$i]));
                 $delay = trim(sanitize_text_field($data['delay'][$i]));
                 $message = trim($data['message'][$i]);
                 if ($request == '' && $destination == '') {
@@ -207,6 +228,10 @@ if (!class_exists("SimpleNorefRirects")) {
                 } else {
                     $redirects[$request] = serialize(array(
                         'destination' => $destination,
+                        'destination_sp' => $destination_sp,
+                        'destination_ios' => $destination_ios,
+                        'destination_tablet' => $destination_tablet,
+                        'destination_ipad' => $destination_ipad,
                         'delay' => $delay,
                         'message' => $message
                     ));
@@ -219,6 +244,103 @@ if (!class_exists("SimpleNorefRirects")) {
                 update_option('noref_redirects_wildcard', 'true');
             } else {
                 delete_option('noref_redirects_wildcard');
+            }
+        }
+
+        /*
+            iPhoneが含まれている場合、スマートフォン
+            iPodが含まれている場合、スマートフォン
+            iPadが含まれている場合、タブレット
+
+            AndroidとMobileが含まれている場合、スマートフォン
+            AndroidでMobileが含まれていない場合、タブレット
+
+            Windows PhoneとMobileが含まれている場合、スマートフォン
+            Windows PhoneとTabletが含まれている場合、タブレット
+
+            FirefoxとMobileが含まれている場合、スマートフォン
+            FirefoxとTabletが含まれている場合、タブレット
+
+            Mobile Safari または Opera Mini が含まれている場合、スマートフォン
+         */
+        function get_device_type(){
+            if ($this->dev_info){
+                return $this->dev_info;
+            }
+            $ua = $_SERVER['HTTP_USER_AGENT'];
+            $dev_type = 'pc';
+            $os_type = 'windows';
+            if (strpos($ua, 'Mobile') !== false){
+                $dev_type = 'smartphone';
+            }
+            elseif (strpos($ua, 'Tablet') !== false){
+                $dev_type = 'tablet';
+            }
+            if (strpos($ua, 'Android') !== false){
+                $dev_type = 'smartphone';
+                echo strpos($ua, 'Android');
+                $os_type = 'Android';
+                if (strpos($ua, 'Mobile') === false){
+                    $dev_type = 'tablet';
+                }
+            }
+            elseif (strpos($ua, 'iPhone') !== false){
+                $dev_type = 'smartphone';
+                $os_type = 'iOS';
+            }
+            elseif (strpos($ua, 'iPod') !== false){
+                $dev_type = 'smartphone';
+                $os_type = 'iOS';
+            }
+            elseif (strpos($ua, 'iPad') !== false){
+                $dev_type = 'tablet';
+                $os_type = 'iOS';
+            }
+            elseif (strpos($ua, 'Windows Phone') !== false){
+                $os_type = 'Windows Phone';
+            }
+            elseif (strpos($ua, 'Firefox') !== false){
+                $os_type = 'Firefox';
+            }
+            elseif (strpos($ua, 'Mobile Safari') !== false){
+                $dev_type = 'smartphone';
+                $os_type = 'Safari';
+            }
+            elseif (strpos($ua, 'Opera mini') !== false){
+                $dev_type = 'smartphone';
+                $os_type = 'Opera';
+            }
+            $this->dev_info = array($dev_type, $os_type);
+            return $this->dev_info;
+        }
+
+        function is_sp(){
+            $dev_info = $this->get_device_type();
+            if ($dev_info[0] === 'smartphone'){
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        function is_ios(){
+            $dev_info = $this->get_device_type();
+            if ($dev_info[1] === 'iOS'){
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        function is_tablet(){
+            $dev_info = $this->get_device_type();
+            if ($dev_info[0] === 'tablet'){
+                return true;
+            }
+            else {
+                return false;
             }
         }
 
@@ -241,6 +363,26 @@ if (!class_exists("SimpleNorefRirects")) {
                 foreach ($redirects as $storedrequest => $data) {
                     $setting = unserialize($data);
                     $destination = $setting['destination'];
+                    if ($this->is_sp()){
+                        if ($setting['destination_sp']){
+                            $destination = $setting['destination_sp'];
+                        }
+                        if ($this->is_ios()){
+                            if ($setting['destination_ios']){
+                                $destination = $setting['destination_ios'];
+                            }
+                        }
+                    }
+                    if ($this->is_tablet()){
+                        if ($setting['destination_tablet']){
+                            $destination = $setting['destination_tablet'];
+                        }
+                        if ($this->is_ios()){
+                            if ($setting['destination_ipad']){
+                                $destination = $setting['destination_ipad'];
+                            }
+                        }
+                    }
                     $delay = $setting['delay'];
                     $message = $setting['message'];
                     if (isset($_GET['ar'])){
