@@ -4,7 +4,7 @@
 * Contributors: hideki noma
 * Tags: noreferrer, redirect, url, seo
 * Requires at least: 3.0
-* Stable tag: 1.05
+* Stable tag: 1.06
 * License: GPLv2 or later
 * License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -41,3 +41,7 @@ Simple Noref Redirects provides an easy method of redirecting requests to anothe
 * = 1.05 =
   * 2019/02/04
   * Added destination switching based on device (iPad as well)
+* = 1.06 =
+  * 2019/02/05
+  * Added referrer type (noref / origin / none)
+

@@ -2,7 +2,7 @@
 /*
   Plugin Name: Simple noref Redirects
   Description: Create a list of URLs that you would like to redirect without referrer to another page or site. Now with wildcard support.Derived from http://www.scottnelle.com/simple-noref-redirects-plugin-for-wordpress/
-  Version: 1.05
+  Version: 1.06
   Author: Hideki Noma
   Author URI: http://www.logitoy.jp/
  */
@@ -91,7 +91,7 @@ if (!class_exists("SimpleNorefRirects")) {
                                 <th colspan="1">Destination<br />iPhone</th>
                                 <th colspan="1">Destination<br />Tablet</th>
                                 <th colspan="1">Destination<br />iPad</th>
-                                <th colspan="1">Delay</th>
+                                <th colspan="1">Delay<br />Type</th>
                                 <th colspan="2">Original Message</th>
                             </tr>
                         </thead>
@@ -109,7 +109,14 @@ if (!class_exists("SimpleNorefRirects")) {
                                 <td style="width:12%;"><input type="text" name="noref_redirects[destination_ios][]" value="" style="width:99%;" /></td>
                                 <td style="width:12%;"><input type="text" name="noref_redirects[destination_tablet][]" value="" style="width:99%;" /></td>
                                 <td style="width:12%;"><input type="text" name="noref_redirects[destination_ipad][]" value="" style="width:99%;" /></td>
-                                <td style="width:5%;"><input type="text" name="noref_redirects[delay][]" value="" style="width:99%;" /></td>
+                                <td style="width:5%;">
+                                    <input type="text" name="noref_redirects[delay][]" value="" style="width:99%;" />
+                                    <select name="noref_redirects[type][]">
+                                        <option value="noref">noref</option>
+                                        <option value="origin">origin</option>
+                                        <option value="none">none</option>
+                                    </select>
+                                </td>
                                 <td style="width:20%;"><textarea type="text" name="noref_redirects[message][]" style="width:99%;" /></textarea></td>
                                 <td><span class="wpsnoref-delete">Delete</span></td>
                             </tr>
@@ -175,6 +182,7 @@ if (!class_exists("SimpleNorefRirects")) {
                     $destination_tablet = $setting['destination_tablet'];
                     $destination_ipad = $setting['destination_ipad'];
                     $delay = $setting['delay'];
+                    $type = $setting['type'];
                     $message = htmlentities($setting['message']);
                     $output .= '
 
@@ -186,7 +194,14 @@ if (!class_exists("SimpleNorefRirects")) {
 						<td><input type="text" name="noref_redirects[destination_ios][]" value="' . $destination_ios . '" style="width:99%;" /></td>
 						<td><input type="text" name="noref_redirects[destination_tablet][]" value="' . $destination_tablet . '" style="width:99%;" /></td>
 						<td><input type="text" name="noref_redirects[destination_ipad][]" value="' . $destination_ipad . '" style="width:99%;" /></td>
-						<td><input type="text" name="noref_redirects[delay][]" value="' . $delay . '" style="width:99%;" /></td>
+						<td>
+                                                    <input type="text" name="noref_redirects[delay][]" value="' . $delay . '" style="width:99%;" />
+                                                    <select name="noref_redirects[type][]">
+                                                        <option value="noref"' . ($type == 'noref' ? ' selected' : '') .'>noref</option>
+                                                        <option value="origin"' . ($type == 'origin' ? ' selected' : '') .'>origin</option>
+                                                        <option value="none"' . ($type == 'none' ? ' selected' : '') .'>none</option>
+                                                    </select>
+                                                </td>
                                                 <td><textarea type="text" name="noref_redirects[message][]" style="width:99%;" />' . $message . '</textarea></td>
 						<td><span class="wpsnoref-delete"></span></td>
 					</tr>
@@ -222,6 +237,7 @@ if (!class_exists("SimpleNorefRirects")) {
                 $destination_tablet = trim(sanitize_text_field($data['destination_tablet'][$i]));
                 $destination_ipad = trim(sanitize_text_field($data['destination_ipad'][$i]));
                 $delay = trim(sanitize_text_field($data['delay'][$i]));
+                $type = trim(sanitize_text_field($data['type'][$i]));
                 $message = trim($data['message'][$i]);
                 if ($request == '' && $destination == '') {
                     continue;
@@ -233,6 +249,7 @@ if (!class_exists("SimpleNorefRirects")) {
                         'destination_tablet' => $destination_tablet,
                         'destination_ipad' => $destination_ipad,
                         'delay' => $delay,
+                        'type' => $type,
                         'message' => $message
                     ));
                 }
@@ -384,6 +401,7 @@ if (!class_exists("SimpleNorefRirects")) {
                         }
                     }
                     $delay = $setting['delay'];
+                    $type = $setting['type'];
                     $message = $setting['message'];
                     if (isset($_GET['ar'])){
                         $force_refresh = true;
@@ -422,7 +440,12 @@ if (!class_exists("SimpleNorefRirects")) {
                     if ($do_redirect !== '' && trim($do_redirect, '/') !== trim($userrequest, '/')) {
                         // check if destination needs the domain prepended
 
-                        header('Referrer-Policy: no-referrer');
+                        if ($type == 'noref'){
+                            header('Referrer-Policy: no-referrer');
+                        }
+                        elseif ($type == 'origin'){
+                            header('Referrer-Policy: origin');
+                        }
                         if (strpos($do_redirect, '/') === 0) {
                             $do_redirect = home_url() . $do_redirect;
                         }
@@ -433,7 +456,7 @@ if (!class_exists("SimpleNorefRirects")) {
                             $meta_noref = 'never'; // IE11までとEdge
                         }
                         if ($do_header_refresh == true) {
-                            // TODO 要検証 header('Refresh:0;URL=' . $do_redirect);
+                            header('Refresh:' . $delay . ';URL=' . $do_redirect);
                         }
 
                         ?>
@@ -441,7 +464,8 @@ if (!class_exists("SimpleNorefRirects")) {
                         <html lang="ja">
                             <head>
                                 <meta charset="utf-8" />
-                                <meta name="referrer" content="<?php echo $meta_noref; ?>" />
+                                <?php if ($type=='noref'){ ?><meta name="referrer" content="<?php echo $meta_noref; ?>" /><?php } ?>
+                                <?php if ($type=='origin'){ ?><meta name="referrer" content="origin" /><?php } ?>
                                 <script>
 
                                     function check_ie() {
@@ -491,7 +515,7 @@ if (!class_exists("SimpleNorefRirects")) {
                                 <?php echo $message; ?>
                                 <?php else: ?>
                                 <h1>画面切り替え中・・・</h1>
-                                <p>画面が切り替わらない場合は <a href="<?php echo $do_redirect; ?>" rel="noreferrer">こちらのリンク</a>をクリックしてください。</p>
+                                <p>画面が切り替わらない場合は <a href="<?php echo $do_redirect; ?>"<?php if ($type=='noref'){ ?> rel="noreferrer"<?php } ?><?php if ($type=='origin'){ ?> rel="origin"<?php } ?>>こちらのリンク</a>をクリックしてください。</p>
                                 <?php endif; ?>
                             </body>
                         </html>
